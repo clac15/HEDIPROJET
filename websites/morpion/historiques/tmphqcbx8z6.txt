@@ -1,0 +1,13 @@
+2025-12-04 17:16:25.691371 - visite page accueil
+2025-12-04 17:16:34.883638 - visite page accueil
+2025-12-04 17:16:36.238054 - visite page équipes
+2025-12-04 17:16:41.772302 - visite page création équipe
+2025-12-04 17:17:25.190754 - visite page création équipe
+2025-12-04 17:17:41.232848 - visite page création équipe
+2025-12-04 17:17:45.694476 - visite page équipes
+2025-12-04 17:17:55.156831 - visite page accueil
+2025-12-04 17:17:59.480393 - visite page historique
+2025-12-04 17:18:07.869308 - visite page accueil
+2025-12-04 17:18:22.899792 - visite page création équipe
+2025-12-04 17:20:34.671212 - visite page historique
+2025-12-04 17:20:36.112054 - visite page historique

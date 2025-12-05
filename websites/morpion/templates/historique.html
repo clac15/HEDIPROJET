@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h2> Historique des activités</h2>
+
+{% if SESSION['HISTORIQUE'] %}
+    <ul>
+    {% for date, activite in SESSION['HISTORIQUE'].items() %}
+        <li><strong>{{ date }} :</strong> {{ activite }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>Aucune activité enregistrée.</p>
+{% endif %}
+
+<form method="post">
+    <input type="submit" name="bouton_generer" value="📄 Générer un fichier historique">
+</form>
+
+{% if REQUEST_VARS.fichier_genere %}
+    <p>
+         <a href="{{ SESSION['DIR_HISTORIQUE'] }}/{{ REQUEST_VARS['fichier_genere'] }}" target="_blank">
+            Télécharger le fichier historique
+        </a>
+    </p>
+{% endif %}
+
+{% include 'message.html' %}
+
+{% endblock %}

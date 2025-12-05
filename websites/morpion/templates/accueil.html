@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h2>🎮 Bienvenue sur Mord ton Pion !</h2>
+
+<p>
+    <strong>Le morpion comme vous ne l'avez jamais vu !</strong><br><br>
+    Dans ce jeu, vos morpions sont des guerriers qui peuvent attaquer et lancer des sorts !
+</p>
+
+<h3> Que faire sur ce site ?</h3>
+<ul>
+    <li>Créer vos équipes de morpions</li>
+    <li> Jouer des parties en mode normal ou avancé</li>
+    <li>Consulter les statistiques</li>
+    <li> Remporter la victoire !</li>
+</ul>
+
+<h2>Statistiques du jeu</h2>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <h3> Morpions</h3>
+        <div class="stat-number">{{ REQUEST_VARS['nb_morpions'] or 0 }}</div>
+        <p>disponibles</p>
+    </div>
+    
+    <div class="stat-card">
+        <h3>👥 Équipes</h3>
+        <div class="stat-number">{{ REQUEST_VARS['nb_equipes'] or 0 }}</div>
+        <p>créées</p>
+    </div>
+    
+    <div class="stat-card">
+        <h3>🎮 Parties</h3>
+        <div class="stat-number">{{ REQUEST_VARS['nb_parties'] or 0 }}</div>
+        <p>jouées</p>
+    </div>
+</div>
+
+<h3> Top 3 des meilleures équipes</h3>
+{% if REQUEST_VARS['top_equipes'] and REQUEST_VARS['top_equipes']|length > 0 %}
+    <ol>
+    {% for equipe in REQUEST_VARS['top_equipes'] %}
+        <li><strong>{{ equipe[0] }}</strong> - {{ equipe[1] }} victoire(s)</li>
+    {% endfor %}
+    </ol>
+{% else %}
+    <p>Aucune équipe n'a encore gagné.</p>
+{% endif %}
+
+<h3>⚡ Records de parties</h3>
+<div class="stats-container">
+    <div class="stat-card">
+        <h3>Partie la plus rapide</h3>
+        {% if REQUEST_VARS['partie_rapide'] %}
+            <div class="stat-number">{{ REQUEST_VARS['partie_rapide'][1] }}</div>
+            <p>tours - Gagnant : {{ REQUEST_VARS['partie_rapide'][0] or 'N/A' }}</p>
+        {% else %}
+            <p>Aucune donnée</p>
+        {% endif %}
+    </div>
+    
+    <div class="stat-card">
+        <h3>Partie la plus longue</h3>
+        {% if REQUEST_VARS['partie_longue'] %}
+            <div class="stat-number">{{ REQUEST_VARS['partie_longue'][1] }}</div>
+            <p>tours - Gagnant : {{ REQUEST_VARS['partie_longue'][0] or 'N/A' }}</p>
+        {% else %}
+            <p>Aucune donnée</p>
+        {% endif %}
+    </div>
+</div>
+
+<h3> Activité mensuelle</h3>
+{% if REQUEST_VARS['activite_mensuelle'] and REQUEST_VARS['activite_mensuelle']|length > 0 %}
+    <table border="1" style="border-collapse: collapse; width: 100%;">
+        <tr style="background-color: #667eea; color: white;">
+            <th style="padding: 10px;">Mois/Année</th>
+            <th style="padding: 10px;">Nombre d'actions</th>
+        </tr>
+        {% for activite in REQUEST_VARS['activite_mensuelle'] %}
+        <tr>
+            <td style="padding: 10px;">{{ activite[0]|int }}/{{ activite[1]|int }}</td>
+            <td style="padding: 10px; text-align: center;">{{ activite[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>Aucune activité enregistrée.</p>
+{% endif %}
+
+{% include 'message.html' %}
+
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{{ titre }}</title>
+</head>
+<body>
+    <header><h1>Mon site Morpion</h1></header>
+
+    <nav>
+        <a href="/">Accueil</a>
+        <a href="/apropos">À propos</a>
+        <a href="/contact">Contact</a>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
+

@@ -1,0 +1,18 @@
+# Routes du site Morpion
+
+[[routes]]
+url = "/"
+controleur = "controleurs/accueil.py"
+template = "templates/accueil.html.twig"
+
+[[routes]]
+url = "/apropos"
+controleur = "controleurs/apropos.py"
+template = "templates/apropos.html.twig"
+
+[[routes]]
+url = "/contact"
+controleur = "controleurs/contact.py"
+template = "templates/contact.html.twig"
+
+

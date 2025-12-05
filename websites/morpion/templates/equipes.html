@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h2> Gestion des équipes</h2>
+
+<p>
+    <strong>Total :</strong> 
+    {% if REQUEST_VARS['equipes'] %}
+        {{ REQUEST_VARS['equipes']|length }} équipe(s)
+    {% else %}
+        0 équipe
+    {% endif %}
+    <br>
+    <a href="creer_equipe"> Créer une nouvelle équipe</a>
+</p>
+
+{% include 'message.html' %}
+
+{% if REQUEST_VARS['equipes'] %}
+    <div class="equipes-container">
+        {% for equipe in REQUEST_VARS['equipes'] %}
+            <div class="equipe-card" style="border-left: 5px solid {{ equipe[2] }};">
+                <div class="equipe-header">
+                    <h3 style="color: {{ equipe[2] }};">{{ equipe[1] }}</h3>
+                    <div class="equipe-couleur" style="background-color: {{ equipe[2] }};"></div>
+                </div>
+                
+                <div class="equipe-info">
+                    <p><strong>Couleur :</strong> {{ equipe[2] }}</p>
+                    <p><strong>Créée le :</strong> {{ equipe[3] }}</p>
+                    <p><strong>Morpions :</strong> {{ equipe[4] }}</p>
+                </div>
+
+                {% if REQUEST_VARS['morpions_par_equipe'] and equipe[0] in REQUEST_VARS['morpions_par_equipe'] %}
+                    <div class="equipe-morpions">
+                        <h4>Membres :</h4>
+                        <div class="morpions-mini-grid">
+                            {% for morpion in REQUEST_VARS['morpions_par_equipe'][equipe[0]] %}
+                                <div class="morpion-mini">
+                                    <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ morpion[2] }}" alt="{{ morpion[1] }}">
+                                    <span>{{ morpion[1] }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    <input type="hidden" name="id_equipe_suppr" value="{{ equipe[0] }}">
+                    <button type="submit" name="bouton_supprimer" style="background-color: #ff6b6b;">
+                        🗑️ Supprimer
+                    </button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>Aucune équipe créée. <a href="creer_equipe">Créer ma première équipe</a></p>
+{% endif %}
+
+{% endblock %}

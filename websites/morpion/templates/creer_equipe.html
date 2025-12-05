@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h2> Créer une nouvelle équipe</h2>
+
+<p>
+    <strong> Instructions :</strong> Une équipe doit contenir entre 6 et 8 morpions.
+</p>
+
+<form method="post">
+    <p>
+        <label for="nom_equipe"><strong>Nom de l'équipe :</strong></label><br>
+        <input type="text" name="nom_equipe" id="nom_equipe" placeholder="Les Guerriers du Feu" required>
+    </p>
+
+    <p>
+        <label for="couleur_equipe"><strong> Couleur :</strong></label><br>
+        <select name="couleur_equipe" id="couleur_equipe" required>
+            <option value="#FF4444">Rouge</option>
+            <option value="#4444FF"> Bleu</option>
+            <option value="#44FF44"> Vert</option>
+            <option value="#FFAA00"> Orange</option>
+            <option value="#FF44FF"> Violet</option>
+            <option value="#00FFFF"> Cyan</option>
+        </select>
+    </p>
+
+    <p><strong>⚔️ Sélectionnez vos morpions (6 à 8) :</strong></p>
+
+    <div class="morpions-grid">
+        {% if REQUEST_VARS['morpions'] %}
+            {% for morpion in REQUEST_VARS['morpions'] %}
+                <div class="morpion-selectable">
+                    <input type="checkbox" name="morpions_selected" value="{{ morpion[0] }}" id="morpion_{{ morpion[0] }}" class="morpion-checkbox">
+                    <label for="morpion_{{ morpion[0] }}" class="morpion-label">
+                        <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ morpion[2] }}" alt="{{ morpion[1] }}">
+                        <h4>{{ morpion[1] }}</h4>
+                        <div class="morpion-stats">
+                            <span> {{ morpion[3] }}</span>
+                            <span> {{ morpion[4] }}</span>
+                            <span>{{ morpion[5] }}</span>
+                            <span> {{ morpion[6] }}</span>
+                        </div>
+                    </label>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Aucun morpion disponible.</p>
+        {% endif %}
+    </div>
+
+    <p style="margin-top: 20px;">
+        <input type="submit" name="bouton_creer" value=" Créer l'équipe">
+    </p>
+</form>
+
+{% include 'message.html' %}
+
+{% endblock %}
