@@ -299,3 +299,74 @@ def add_ligne_journal(connexion, id_journal, description):
     except Exception as e:
         print(f"Erreur ajout ligne journal : {e}")
         return None
+
+# ============================================================
+# FONCTIONS POUR LES PARTIES (à ajouter à model_pg.py)
+# ============================================================
+
+def get_equipes_for_select(connexion):
+    """
+    Retourne les équipes pour le menu déroulant (id, nom, couleur)
+    """
+    query = "SELECT idEquipe, nomEquipe, couleur FROM morpion.Equipe ORDER BY nomEquipe"
+    return execute_select(connexion, query)
+
+
+def get_equipe_by_id(connexion, id_equipe):
+    """
+    Retourne une équipe par son ID
+    """
+    query = "SELECT * FROM morpion.Equipe WHERE idEquipe = %s"
+    result = execute_select(connexion, query, [id_equipe])
+    if result:
+        return result[0]
+    return None
+
+
+def get_partie_by_id(connexion, id_partie):
+    """
+    Retourne une partie par son ID
+    """
+    query = "SELECT * FROM morpion.Partie WHERE idPartie = %s"
+    result = execute_select(connexion, query, [id_partie])
+    if result:
+        return result[0]
+    return None
+
+
+def get_config_by_id(connexion, id_config):
+    """
+    Retourne une configuration par son ID
+    """
+    query = "SELECT * FROM morpion.Configuration_ WHERE idConfiguration = %s"
+    result = execute_select(connexion, query, [id_config])
+    if result:
+        return result[0]
+    return None
+
+
+def get_equipes_partie(connexion, id_partie):
+    """
+    Retourne les 2 équipes d'une partie
+    """
+    query = """
+        SELECT e.*, pe.numero_equipe
+        FROM morpion.Equipe e
+        JOIN morpion.Partie_Equipe pe ON e.idEquipe = pe.idEquipe
+        WHERE pe.idPartie = %s
+        ORDER BY pe.numero_equipe
+    """
+    return execute_select(connexion, query, [id_partie])
+
+
+def terminer_partie(connexion, id_partie, gagnant):
+    """
+    Termine une partie en enregistrant le gagnant et la date de fin
+    """
+    query = """
+        UPDATE morpion.Partie 
+        SET dateFin = %s, gagnant = %s 
+        WHERE idPartie = %s
+    """
+    date_fin = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return execute_insert_update_delete(connexion, query, [date_fin, gagnant, id_partie])

@@ -194,7 +194,7 @@ main ul li {
 }
 
 .stat-card h3 {
-    color: #667eea;
+    color: #04e222;
     margin-top: 0;
 }
 
@@ -203,6 +203,8 @@ main ul li {
     font-weight: bold;
     color: #f5576c;
 }
+
+
 
 /* ===== GRILLE DES MORPIONS (CRÉATION ÉQUIPE) ===== */
 .morpions-grid {
@@ -367,3 +369,4 @@ main ul li {
 .game-cell:hover {
     background-color: #d0e8f0;
 }
+

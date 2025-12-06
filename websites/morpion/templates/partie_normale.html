@@ -1,5 +1,141 @@
-{% extends "templates/base.html" %}
+{% extends "base.html" %}
 
-{% block content %}
-<h1>Partie normale</h1>
+{% block main_content %}
+<h2>🎮 Partie normale</h2>
+
+{% include 'message.html' %}
+
+<!-- ÉTAPE 1 : Configuration de la partie -->
+{% if not REQUEST_VARS['partie_en_cours'] %}
+
+    <h3>⚙️ Configurer la partie</h3>
+    
+    {% if REQUEST_VARS['equipes'] and REQUEST_VARS['equipes']|length >= 2 %}
+        <form method="post">
+            <p>
+                <label for="equipe1"><strong>🔴 Équipe 1 :</strong></label><br>
+                <select name="equipe1" id="equipe1" required>
+                    <option value="">-- Choisir --</option>
+                    {% for equipe in REQUEST_VARS['equipes'] %}
+                        <option value="{{ equipe[0] }}">{{ equipe[1] }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            
+            <p>
+                <label for="equipe2"><strong>🔵 Équipe 2 :</strong></label><br>
+                <select name="equipe2" id="equipe2" required>
+                    <option value="">-- Choisir --</option>
+                    {% for equipe in REQUEST_VARS['equipes'] %}
+                        <option value="{{ equipe[0] }}">{{ equipe[1] }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            
+            <p>
+                <label for="taille"><strong>📐 Taille de la grille :</strong></label><br>
+                <select name="taille" id="taille" required>
+                    <option value="3">3 x 3</option>
+                    <option value="4">4 x 4</option>
+                </select>
+            </p>
+            
+            <p>
+                <label for="max_tours"><strong>🔄 Nombre max de tours :</strong></label><br>
+                <input type="number" name="max_tours" id="max_tours" value="50" min="10" max="100" required>
+            </p>
+            
+            <p>
+                <input type="submit" name="bouton_creer_partie" value="🎮 Lancer la partie">
+            </p>
+        </form>
+    {% else %}
+        <p>⚠️ Il faut au moins 2 équipes pour jouer. <a href="creer_equipe">Créer une équipe</a></p>
+    {% endif %}
+
+<!-- ÉTAPE 2 : Partie en cours -->
+{% else %}
+
+    <h3>🎯 Partie en cours</h3>
+    
+    <!-- Informations sur la partie -->
+    <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <p>
+            <strong style="color: {{ REQUEST_VARS['equipe1'][2] }};">🔴 {{ REQUEST_VARS['equipe1'][1] }}</strong>
+            VS
+            <strong style="color: {{ REQUEST_VARS['equipe2'][2] }};">🔵 {{ REQUEST_VARS['equipe2'][1] }}</strong>
+        </p>
+        <p>Tour : {{ REQUEST_VARS['tour_actuel'] }} / {{ REQUEST_VARS['max_tours'] }}</p>
+        <p>
+            C'est au tour de : 
+            <strong style="color: {{ REQUEST_VARS['equipe_courante'][2] }};">
+                {{ REQUEST_VARS['equipe_courante'][1] }}
+            </strong>
+        </p>
+    </div>
+    
+    <!-- Grille de jeu -->
+    <div class="grille-jeu" style="display: grid; grid-template-columns: repeat({{ REQUEST_VARS['taille'] }}, 100px); gap: 5px; margin: 20px 0;">
+        {% for ligne in range(REQUEST_VARS['taille']) %}
+            {% for colonne in range(REQUEST_VARS['taille']) %}
+                {% set case_id = ligne * REQUEST_VARS['taille'] + colonne %}
+                {% set case_contenu = REQUEST_VARS['grille'][case_id] %}
+                
+                {% if case_contenu == '' %}
+                    <!-- Case vide : on peut cliquer -->
+                    <form method="post" style="margin: 0;">
+                        <input type="hidden" name="case_jouee" value="{{ case_id }}">
+                        <button type="submit" name="bouton_jouer" class="case-vide" style="width: 100px; height: 100px; background-color: #f0f0f0; border: 2px solid #667eea; border-radius: 10px; cursor: pointer;">
+                            &nbsp;
+                        </button>
+                    </form>
+                {% else %}
+                    <!-- Case occupée -->
+                    <div style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" alt="{{ case_contenu['nom'] }}" style="width: 80px; height: 80px; border-radius: 50%;" title="{{ case_contenu['nom'] }}">
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+    
+    <!-- Sélection du morpion à placer -->
+    <h4>Choisissez un morpion à placer :</h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        {% for morpion in REQUEST_VARS['morpions_disponibles'] %}
+            <label style="cursor: pointer;">
+                <input type="radio" name="morpion_choisi" value="{{ morpion[0] }}" 
+                    {% if REQUEST_VARS['morpion_selectionne'] == morpion[0] %}checked{% endif %}
+                    onchange="this.form.submit()" form="form_selection">
+                <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ morpion[2] }}" alt="{{ morpion[1] }}" 
+                    style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid {% if REQUEST_VARS['morpion_selectionne'] == morpion[0] %}#667eea{% else %}#ccc{% endif %};">
+                <br>
+                <small>{{ morpion[1] }}</small>
+            </label>
+        {% endfor %}
+    </div>
+    <form id="form_selection" method="post">
+        <input type="hidden" name="action_selection" value="1">
+    </form>
+    
+    <!-- Bouton abandonner -->
+    <form method="post" style="margin-top: 20px;">
+        <input type="submit" name="bouton_abandonner" value="🏳️ Abandonner la partie" style="background-color: #ff6b6b;">
+    </form>
+
+{% endif %}
+
+<!-- RÉSULTAT DE LA PARTIE -->
+{% if REQUEST_VARS['partie_terminee'] %}
+    <div style="background-color: #d3f9d8; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+        <h2>🏆 Partie terminée !</h2>
+        {% if REQUEST_VARS['gagnant'] %}
+            <p style="font-size: 24px;">Victoire de <strong>{{ REQUEST_VARS['gagnant'] }}</strong> !</p>
+        {% else %}
+            <p style="font-size: 24px;">Match nul !</p>
+        {% endif %}
+        <a href="partie_normale">🎮 Nouvelle partie</a>
+    </div>
+{% endif %}
+
 {% endblock %}

@@ -59,3 +59,8 @@ url = "historique"
 controleur = "controleurs/historique.py"
 template = "templates/historique.html"
 
+[[routes]]
+url = "partie_normale"
+controleur = "controleurs/partie_normale.py"
+template = "templates/partie_normale.html"
+

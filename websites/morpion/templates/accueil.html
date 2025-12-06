@@ -26,13 +26,13 @@
     </div>
     
     <div class="stat-card">
-        <h3>👥 Équipes</h3>
+        <h3> Équipes</h3>
         <div class="stat-number">{{ REQUEST_VARS['nb_equipes'] or 0 }}</div>
         <p>créées</p>
     </div>
     
     <div class="stat-card">
-        <h3>🎮 Parties</h3>
+        <h3> Parties</h3>
         <div class="stat-number">{{ REQUEST_VARS['nb_parties'] or 0 }}</div>
         <p>jouées</p>
     </div>
@@ -75,7 +75,7 @@
 <h3> Activité mensuelle</h3>
 {% if REQUEST_VARS['activite_mensuelle'] and REQUEST_VARS['activite_mensuelle']|length > 0 %}
     <table border="1" style="border-collapse: collapse; width: 100%;">
-        <tr style="background-color: #667eea; color: white;">
+        <tr style="background-color: #cd96d4; color: white;">
             <th style="padding: 10px;">Mois/Année</th>
             <th style="padding: 10px;">Nombre d'actions</th>
         </tr>

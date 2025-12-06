@@ -8,7 +8,7 @@ if POST and 'bouton_valider' in POST:  # formulaire soumis
     nom_serie = POST['nom_serie'][0]  # attention, un <input> retourne une liste
     serie_existe = get_serie_by_name(SESSION['CONNEXION'], nom_serie)
     print(serie_existe)
-    if serie_existe is not None and len(serie_existe) == 0:  # pas de série avec ce nom
+    if serie_existe is not None and len(serie_existe) == 0:  #pas de série avec ce nom
         serie_ajout = insert_serie(SESSION['CONNEXION'], nom_serie)
         if serie_ajout and serie_ajout > 0:  # insertion réussie
             REQUEST_VARS['message'] = f"La série {nom_serie} a bien été ajoutée !"
