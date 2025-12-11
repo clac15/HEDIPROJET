@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+<h2>⚔️ Partie avancée</h2>
+
+{% include 'message.html' %}
+
+<!-- Message de combat -->
+{% if REQUEST_VARS['message_combat'] %}
+    <div style="background-color: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 2px solid #ffc107; font-size: 18px;">
+        {{ REQUEST_VARS['message_combat'] }}
+    </div>
+{% endif %}
+
+<!-- ÉTAPE 1 : Configuration de la partie -->
+{% if not REQUEST_VARS['partie_en_cours'] and not REQUEST_VARS['partie_terminee'] %}
+
+    <h3>⚙️ Configurer la partie</h3>
+    
+    <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <h4>📜 Règles du mode avancé :</h4>
+        <ul>
+            <li>📍 <strong>Placer</strong> : Poser un morpion sur une case vide</li>
+            <li>⚔️ <strong>Attaquer</strong> : Frapper un ennemi adjacent (dégâts = pts attaque)</li>
+            <li>🔥 <strong>Boule de feu</strong> (2 mana) : 3 dégâts à distance</li>
+            <li>💚 <strong>Soin</strong> (1 mana) : +2 PV à un allié</li>
+            <li>💥 <strong>Armageddon</strong> (5 mana) : Détruit une case définitivement</li>
+            <li>🎯 Chance de réussite = 10 × points de réussite</li>
+            <li>🏆 Victoire : aligner 3/4 morpions OU éliminer tous les ennemis</li>
+        </ul>
+    </div>
+    
+    {% if REQUEST_VARS['equipes'] and REQUEST_VARS['equipes']|length >= 2 %}
+        <form method="post">
+            <p>
+                <label for="equipe1"><strong>🔴 Équipe 1 :</strong></label><br>
+                <select name="equipe1" id="equipe1" required>
+                    <option value="">-- Choisir --</option>
+                    {% for equipe in REQUEST_VARS['equipes'] %}
+                        <option value="{{ equipe[0] }}">{{ equipe[1] }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            
+            <p>
+                <label for="equipe2"><strong>🔵 Équipe 2 :</strong></label><br>
+                <select name="equipe2" id="equipe2" required>
+                    <option value="">-- Choisir --</option>
+                    {% for equipe in REQUEST_VARS['equipes'] %}
+                        <option value="{{ equipe[0] }}">{{ equipe[1] }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            
+            <p>
+                <label for="taille"><strong>📐 Taille de la grille :</strong></label><br>
+                <select name="taille" id="taille" required>
+                    <option value="3">3 x 3</option>
+                    <option value="4">4 x 4</option>
+                </select>
+            </p>
+            
+            <p>
+                <label for="max_tours"><strong>🔄 Nombre max de tours :</strong></label><br>
+                <input type="number" name="max_tours" id="max_tours" value="50" min="10" max="100" required>
+            </p>
+            
+            <p>
+                <input type="submit" name="bouton_creer_partie" value="⚔️ Lancer la partie avancée">
+            </p>
+        </form>
+    {% else %}
+        <p>⚠️ Il faut au moins 2 équipes pour jouer. <a href="creer_equipe">Créer une équipe</a></p>
+    {% endif %}
+
+{% endif %}
+
+<!-- ÉTAPE 2 : Partie en cours -->
+{% if REQUEST_VARS['partie_en_cours'] %}
+
+    <h3>🎯 Partie en cours</h3>
+    
+    <!-- Informations sur la partie -->
+    <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <p>
+            <strong style="color: {{ REQUEST_VARS['equipe1'][2] }};">🔴 {{ REQUEST_VARS['equipe1'][1] }}</strong>
+            VS
+            <strong style="color: {{ REQUEST_VARS['equipe2'][2] }};">🔵 {{ REQUEST_VARS['equipe2'][1] }}</strong>
+        </p>
+        <p>Tour : {{ REQUEST_VARS['tour_actuel'] }} / {{ REQUEST_VARS['max_tours'] }}</p>
+        <p>
+            C'est au tour de : 
+            <strong style="color: {{ REQUEST_VARS['equipe_courante'][2] }};">
+                {{ REQUEST_VARS['equipe_courante'][1] }}
+            </strong>
+        </p>
+    </div>
+
+    <!-- Sélection de l'action -->
+    <h4>1. Choisissez une action :</h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="action_choisie" value="placer">
+            <button type="submit" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; {% if REQUEST_VARS['action_selectionnee'] == 'placer' %}background-color: #51cf66; color: white;{% else %}background-color: #e0e0e0;{% endif %}">
+                📍 Placer
+            </button>
+        </form>
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="action_choisie" value="attaquer">
+            <button type="submit" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; {% if REQUEST_VARS['action_selectionnee'] == 'attaquer' %}background-color: #51cf66; color: white;{% else %}background-color: #e0e0e0;{% endif %}">
+                ⚔️ Attaquer
+            </button>
+        </form>
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="action_choisie" value="boule_de_feu">
+            <button type="submit" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; {% if REQUEST_VARS['action_selectionnee'] == 'boule_de_feu' %}background-color: #51cf66; color: white;{% else %}background-color: #e0e0e0;{% endif %}">
+                🔥 Boule de feu (2 mana)
+            </button>
+        </form>
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="action_choisie" value="soin">
+            <button type="submit" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; {% if REQUEST_VARS['action_selectionnee'] == 'soin' %}background-color: #51cf66; color: white;{% else %}background-color: #e0e0e0;{% endif %}">
+                💚 Soin (1 mana)
+            </button>
+        </form>
+        <form method="post" style="margin: 0;">
+            <input type="hidden" name="action_choisie" value="armageddon">
+            <button type="submit" style="padding: 10px 15px; border-radius: 8px; cursor: pointer; {% if REQUEST_VARS['action_selectionnee'] == 'armageddon' %}background-color: #51cf66; color: white;{% else %}background-color: #e0e0e0;{% endif %}">
+                💥 Armageddon (5 mana)
+            </button>
+        </form>
+    </div>
+
+    <!-- Instructions selon l'action -->
+    {% if REQUEST_VARS['action_selectionnee'] == 'placer' %}
+        <h4>2. Sélectionnez un morpion à placer :</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+            {% for morpion in REQUEST_VARS['morpions_disponibles'] %}
+                <form method="post" style="margin: 0;">
+                    <input type="hidden" name="morpion_choisi" value="{{ morpion[0] }}">
+                    <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer;">
+                        <div style="text-align: center; padding: 10px; border-radius: 10px; width: 80px; {% if REQUEST_VARS['morpion_selectionne'] == morpion[0] %}background-color: #d3f9d8; border: 3px solid #51cf66;{% else %}background-color: #f0f0f0; border: 3px solid #ccc;{% endif %}">
+                            <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ morpion[2] }}" alt="{{ morpion[1] }}" style="width: 50px; height: 50px; border-radius: 50%;">
+                            <br><small style="font-weight: bold;">{{ morpion[1] }}</small>
+                        </div>
+                    </button>
+                </form>
+            {% endfor %}
+        </div>
+        {% if REQUEST_VARS['morpion_selectionne'] %}
+            <p style="color: green;">✅ Morpion sélectionné ! Cliquez sur une case vide.</p>
+        {% else %}
+            <p style="color: orange;">⚠️ Sélectionnez un morpion ci-dessus.</p>
+        {% endif %}
+    {% else %}
+        <h4>2. Sélectionnez votre morpion sur la grille :</h4>
+        {% if REQUEST_VARS['case_selectionnee'] is not none %}
+            <p style="color: green;">✅ Morpion sélectionné ! Cliquez sur la cible.</p>
+        {% else %}
+            <p style="color: orange;">⚠️ Cliquez sur un de vos morpions (bordure verte sur la grille).</p>
+        {% endif %}
+    {% endif %}
+
+    <!-- Grille de jeu -->
+    <h4>3. Grille de jeu :</h4>
+    <div style="display: grid; grid-template-columns: repeat({{ REQUEST_VARS['taille'] }}, 100px); gap: 5px; margin: 20px 0;">
+        {% for i in range(REQUEST_VARS['taille'] * REQUEST_VARS['taille']) %}
+            {% set case_contenu = REQUEST_VARS['grille'][i] %}
+            
+            {% if case_contenu == 'DESTROYED' %}
+                <!-- Case détruite -->
+                <div style="width: 100px; height: 100px; background-color: #333; border: 2px solid #000; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 30px;">💥</span>
+                </div>
+            
+            {% elif case_contenu == '' %}
+                <!-- Case vide -->
+                <form method="post" style="margin: 0;">
+                    <input type="hidden" name="case_jouee" value="{{ i }}">
+                    <button type="submit" style="width: 100px; height: 100px; border-radius: 10px; cursor: pointer; background-color: #f0f0f0; border: 2px solid #667eea;">
+                        &nbsp;
+                    </button>
+                </form>
+            
+            {% else %}
+                <!-- Case avec morpion -->
+                {% set est_mon_morpion = (case_contenu['joueur'] == REQUEST_VARS['joueur_courant']) %}
+                {% set est_selectionne = (REQUEST_VARS['case_selectionnee'] == i) %}
+                {% set lanceur_deja_choisi = (REQUEST_VARS['case_selectionnee'] is not none) %}
+                
+                {% if REQUEST_VARS['action_selectionnee'] == 'placer' %}
+                    <!-- Mode placer : morpions non cliquables -->
+                    <div style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 2px solid #333; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" style="width: 45px; height: 45px; border-radius: 50%;">
+                        <div style="font-size: 10px; color: white; text-shadow: 1px 1px 1px black;">
+                            ❤️{{ case_contenu['pv'] }} ✨{{ case_contenu['mana'] }}
+                        </div>
+                    </div>
+                
+                {% elif est_mon_morpion and not lanceur_deja_choisi %}
+                    <!-- Mon morpion et pas encore de lanceur : clic = sélectionner comme lanceur -->
+                    <form method="post" style="margin: 0;">
+                        <input type="hidden" name="select_case" value="{{ i }}">
+                        <button type="submit" style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 3px solid #51cf66; border-radius: 10px; cursor: pointer; padding: 5px;">
+                            <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" style="width: 45px; height: 45px; border-radius: 50%;">
+                            <div style="font-size: 10px; color: white; text-shadow: 1px 1px 1px black;">
+                                ❤️{{ case_contenu['pv'] }} ✨{{ case_contenu['mana'] }}
+                            </div>
+                        </button>
+                    </form>
+                
+                {% elif est_mon_morpion and lanceur_deja_choisi and est_selectionne %}
+                    <!-- C'est le morpion sélectionné (lanceur) : bordure jaune -->
+                    <div style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 3px solid #ffff00; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" style="width: 45px; height: 45px; border-radius: 50%;">
+                        <div style="font-size: 10px; color: white; text-shadow: 1px 1px 1px black;">
+                            ❤️{{ case_contenu['pv'] }} ✨{{ case_contenu['mana'] }}
+                        </div>
+                        <div style="font-size: 9px; color: yellow;">LANCEUR</div>
+                    </div>
+                
+                {% elif est_mon_morpion and lanceur_deja_choisi and not est_selectionne %}
+                    <!-- Mon morpion mais lanceur déjà choisi : clic = cibler (pour soin) -->
+                    <form method="post" style="margin: 0;">
+                        <input type="hidden" name="case_jouee" value="{{ i }}">
+                        <button type="submit" style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 3px solid #51cf66; border-radius: 10px; cursor: pointer; padding: 5px;">
+                            <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" style="width: 45px; height: 45px; border-radius: 50%;">
+                            <div style="font-size: 10px; color: white; text-shadow: 1px 1px 1px black;">
+                                ❤️{{ case_contenu['pv'] }} ✨{{ case_contenu['mana'] }}
+                            </div>
+                        </button>
+                    </form>
+                
+                {% else %}
+                    <!-- Morpion ennemi : cliquable comme cible -->
+                    <form method="post" style="margin: 0;">
+                        <input type="hidden" name="case_jouee" value="{{ i }}">
+                        <button type="submit" style="width: 100px; height: 100px; background-color: {{ case_contenu['couleur'] }}; border: 3px solid #ff6b6b; border-radius: 10px; cursor: pointer; padding: 5px;">
+                            <img src="{{ SESSION['DIRECTORY'] }}/static/img/{{ case_contenu['image'] }}" style="width: 45px; height: 45px; border-radius: 50%;">
+                            <div style="font-size: 10px; color: white; text-shadow: 1px 1px 1px black;">
+                                ❤️{{ case_contenu['pv'] }} ✨{{ case_contenu['mana'] }}
+                            </div>
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Légende -->
+    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+        <strong>Légende :</strong>
+        ❤️ PV (points de vie) |
+        ✨ Mana |
+        🟢 Vos morpions |
+        🔴 Morpions ennemis |
+        💥 Case détruite
+    </div>
+    
+    <!-- Bouton abandonner -->
+    <form method="post" style="margin-top: 20px;">
+        <input type="hidden" name="bouton_abandonner" value="1">
+        <input type="submit" value="🏳️ Abandonner la partie" style="background-color: #ff6b6b;">
+    </form>
+
+{% endif %}
+
+<!-- RÉSULTAT DE LA PARTIE -->
+{% if REQUEST_VARS['partie_terminee'] %}
+    <div style="background-color: #d3f9d8; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+        <h2>🏆 Partie terminée !</h2>
+        {% if REQUEST_VARS['gagnant'] %}
+            <p style="font-size: 24px;">Victoire de <strong>{{ REQUEST_VARS['gagnant'] }}</strong> !</p>
+        {% else %}
+            <p style="font-size: 24px;">Match nul !</p>
+        {% endif %}
+        <a href="partie_avancee">⚔️ Nouvelle partie avancée</a>
+    </div>
+{% endif %}
+
+{% endblock %}

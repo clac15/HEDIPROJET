@@ -5,9 +5,10 @@ from model.model_pg import (
     get_equipes_for_select, 
     get_equipe_by_id, 
     get_morpions_equipe,
+    get_morpion_by_id,
     create_partie,
-    add_ligne_journal,
-    terminer_partie
+    terminer_partie,
+    add_ligne_journal
 )
 from controleurs.includes import add_activity
 
@@ -22,6 +23,68 @@ if 'partie_normale' not in SESSION:
 REQUEST_VARS['equipes'] = get_equipes_for_select(SESSION['CONNEXION'])
 REQUEST_VARS['partie_en_cours'] = False
 REQUEST_VARS['partie_terminee'] = False
+
+
+# ============================================================
+# FONCTIONS UTILITAIRES
+# ============================================================
+
+def verifier_victoire(grille, taille):
+    """
+    Vérifie si un joueur a gagné
+    Retourne le numéro du joueur gagnant (1 ou 2) ou None
+    """
+    # Vérifier les lignes
+    for ligne in range(taille):
+        debut = ligne * taille
+        cases = [grille[debut + col] for col in range(taille)]
+        gagnant = verifier_alignement(cases)
+        if gagnant:
+            return gagnant
+    
+    # Vérifier les colonnes
+    for col in range(taille):
+        cases = [grille[ligne * taille + col] for ligne in range(taille)]
+        gagnant = verifier_alignement(cases)
+        if gagnant:
+            return gagnant
+    
+    # Vérifier diagonale principale
+    cases = [grille[i * taille + i] for i in range(taille)]
+    gagnant = verifier_alignement(cases)
+    if gagnant:
+        return gagnant
+    
+    # Vérifier diagonale inverse
+    cases = [grille[i * taille + (taille - 1 - i)] for i in range(taille)]
+    gagnant = verifier_alignement(cases)
+    if gagnant:
+        return gagnant
+    
+    return None
+
+
+def verifier_alignement(cases):
+    """
+    Vérifie si toutes les cases sont du même joueur
+    """
+    # Vérifier que toutes les cases sont remplies
+    if any(case == '' for case in cases):
+        return None
+    
+    # Vérifier que toutes appartiennent au même joueur
+    joueur = cases[0]['joueur']
+    if all(case['joueur'] == joueur for case in cases):
+        return joueur
+    
+    return None
+
+
+def est_grille_pleine(grille):
+    """
+    Vérifie si la grille est pleine
+    """
+    return all(case != '' for case in grille)
 
 
 # ============================================================
@@ -43,19 +106,21 @@ if POST and 'bouton_creer_partie' in POST:
         equipe2 = get_equipe_by_id(SESSION['CONNEXION'], equipe2_id)
         
         # Créer la partie dans la BD
-        id_partie = create_partie(SESSION['CONNEXION'], equipe1_id, equipe2_id, taille, max_tours)
+        result = create_partie(SESSION['CONNEXION'], equipe1_id, equipe2_id, taille, max_tours)
+        id_partie, id_journal = result
         
         if id_partie:
             # Initialiser la partie en session
             SESSION['partie_normale'] = {
                 'id_partie': id_partie,
+                'id_journal': id_journal,
                 'equipe1': equipe1,
                 'equipe2': equipe2,
                 'taille': taille,
                 'max_tours': max_tours,
                 'tour_actuel': 1,
-                'joueur_courant': 1,  # 1 ou 2
-                'grille': [''] * (taille * taille),  # Grille vide
+                'joueur_courant': 1,
+                'grille': [''] * (taille * taille),
                 'morpion_selectionne': None,
                 'morpions_utilises_eq1': [],
                 'morpions_utilises_eq2': []
@@ -80,7 +145,7 @@ if POST and 'bouton_abandonner' in POST:
 # ============================================================
 # SÉLECTIONNER UN MORPION
 # ============================================================
-if POST and 'action_selection' in POST and 'morpion_choisi' in POST:
+if POST and 'morpion_choisi' in POST:
     if SESSION['partie_normale']:
         SESSION['partie_normale']['morpion_selectionne'] = POST['morpion_choisi'][0]
 
@@ -88,7 +153,7 @@ if POST and 'action_selection' in POST and 'morpion_choisi' in POST:
 # ============================================================
 # JOUER UN COUP
 # ============================================================
-if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
+if POST and 'case_jouee' in POST and 'morpion_choisi' not in POST and 'bouton_abandonner' not in POST:
     partie = SESSION['partie_normale']
     
     if partie:
@@ -107,16 +172,17 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
         
         else:
             # Récupérer les infos du morpion
-            from model.model_pg import get_morpion_by_id
             morpion = get_morpion_by_id(SESSION['CONNEXION'], morpion_id)
             
             # Déterminer la couleur selon le joueur
             if partie['joueur_courant'] == 1:
                 couleur = partie['equipe1'][2]
                 partie['morpions_utilises_eq1'].append(morpion_id)
+                nom_equipe = partie['equipe1'][1]
             else:
                 couleur = partie['equipe2'][2]
                 partie['morpions_utilises_eq2'].append(morpion_id)
+                nom_equipe = partie['equipe2'][1]
             
             # Placer le morpion
             partie['grille'][case_id] = {
@@ -126,6 +192,13 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
                 'couleur': couleur,
                 'joueur': partie['joueur_courant']
             }
+            
+            # Enregistrer l'action dans le journal
+            add_ligne_journal(
+                SESSION['CONNEXION'],
+                partie['id_journal'],
+                f"{morpion[1]} placé en case {case_id} par {nom_equipe}"
+            )
             
             # Vérifier victoire
             gagnant = verifier_victoire(partie['grille'], partie['taille'])
@@ -137,6 +210,13 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
                 else:
                     nom_gagnant = partie['equipe2'][1]
                 
+                # Enregistrer la victoire dans le journal
+                add_ligne_journal(
+                    SESSION['CONNEXION'],
+                    partie['id_journal'],
+                    f"Victoire de {nom_gagnant} !"
+                )
+                
                 terminer_partie(SESSION['CONNEXION'], partie['id_partie'], nom_gagnant)
                 REQUEST_VARS['partie_terminee'] = True
                 REQUEST_VARS['gagnant'] = nom_gagnant
@@ -144,6 +224,12 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
             
             elif est_grille_pleine(partie['grille']):
                 # Match nul
+                add_ligne_journal(
+                    SESSION['CONNEXION'],
+                    partie['id_journal'],
+                    "Match nul - grille pleine"
+                )
+                
                 terminer_partie(SESSION['CONNEXION'], partie['id_partie'], None)
                 REQUEST_VARS['partie_terminee'] = True
                 REQUEST_VARS['gagnant'] = None
@@ -151,6 +237,12 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
             
             elif partie['tour_actuel'] >= partie['max_tours']:
                 # Nombre max de tours atteint
+                add_ligne_journal(
+                    SESSION['CONNEXION'],
+                    partie['id_journal'],
+                    "Match nul - nombre max de tours atteint"
+                )
+                
                 terminer_partie(SESSION['CONNEXION'], partie['id_partie'], None)
                 REQUEST_VARS['partie_terminee'] = True
                 REQUEST_VARS['gagnant'] = None
@@ -165,68 +257,6 @@ if POST and 'bouton_jouer' in POST and 'case_jouee' in POST:
                     partie['tour_actuel'] += 1
                 
                 partie['morpion_selectionne'] = None
-
-
-# ============================================================
-# FONCTIONS UTILITAIRES
-# ============================================================
-
-def verifier_victoire(grille, taille):
-    """
-    Vérifie si un joueur a gagné
-    Retourne le numéro du joueur gagnant (1 ou 2) ou None
-    """
-    # Vérifier les lignes
-    for ligne in range(taille):
-        debut = ligne * taille
-        cases = [grille[debut + col] for col in range(taille)]
-        gagnant = verifier_alignement(cases, taille)
-        if gagnant:
-            return gagnant
-    
-    # Vérifier les colonnes
-    for col in range(taille):
-        cases = [grille[ligne * taille + col] for ligne in range(taille)]
-        gagnant = verifier_alignement(cases, taille)
-        if gagnant:
-            return gagnant
-    
-    # Vérifier diagonale principale
-    cases = [grille[i * taille + i] for i in range(taille)]
-    gagnant = verifier_alignement(cases, taille)
-    if gagnant:
-        return gagnant
-    
-    # Vérifier diagonale inverse
-    cases = [grille[i * taille + (taille - 1 - i)] for i in range(taille)]
-    gagnant = verifier_alignement(cases, taille)
-    if gagnant:
-        return gagnant
-    
-    return None
-
-
-def verifier_alignement(cases, taille):
-    """
-    Vérifie si toutes les cases sont du même joueur
-    """
-    # Vérifier que toutes les cases sont remplies
-    if any(case == '' for case in cases):
-        return None
-    
-    # Vérifier que toutes appartiennent au même joueur
-    joueur = cases[0]['joueur']
-    if all(case['joueur'] == joueur for case in cases):
-        return joueur
-    
-    return None
-
-
-def est_grille_pleine(grille):
-    """
-    Vérifie si la grille est pleine
-    """
-    return all(case != '' for case in grille)
 
 
 # ============================================================
